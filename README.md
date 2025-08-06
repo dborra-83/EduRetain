@@ -463,28 +463,6 @@ npx cdk deploy EduRetainProd --profile eduretain-prod --rollback
 | USER_POOL_ID | us-east-1_XXX | us-east-1_YYY | Cognito User Pool |
 | IDENTITY_POOL_ID | us-east-1:XXX | us-east-1:YYY | Cognito Identity Pool |
 
-### 🔐 Usuarios de Prueba
-
-#### Desarrollo
-```
-Admin:
-- Email: admin@eduretain.com
-- Password: Admin123!Dev
-- Rol: ADMIN_UNIVERSIDAD
-
-Demo:
-- Email: demo@eduretain.com
-- Password: Demo123!Dev
-- Rol: OPERADOR_FACULTAD
-```
-
-#### Producción
-```
-Admin:
-- Email: admin@eduretain.com
-- Password: [Configurar en primer login]
-- Rol: ADMIN_UNIVERSIDAD
-```
 
 ## 📊 Funcionalidades Detalladas
 
