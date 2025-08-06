@@ -134,7 +134,7 @@ async function createUniversidad(
 
     const validation = validateRequest(universidadSchema, body);
     if (!validation.success) {
-      return validation.response;
+      return (validation as any).response;
     }
 
     logger.info('Creating universidad', { data: validation.data });
@@ -145,7 +145,7 @@ async function createUniversidad(
       return conflictResponse('Ya existe una universidad con este código');
     }
 
-    const universidad = await repository.create(validation.data);
+    const universidad = await repository.create(validation.data as any);
     logger.info('Universidad created successfully', { universidadId: universidad.id });
 
     return createdResponse(universidad, 'Universidad creada exitosamente');
@@ -187,7 +187,7 @@ async function updateUniversidad(
     // Validar datos parciales
     const validation = validateRequest(universidadSchema.partial(), body);
     if (!validation.success) {
-      return validation.response;
+      return (validation as any).response;
     }
 
     // Si se está actualizando el código, verificar que no esté en uso

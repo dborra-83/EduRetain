@@ -88,7 +88,7 @@ export class AlumnoRepository extends BaseRepository {
     } else if (filters.estadoMatricula) {
       pk = `${universidadId}#${filters.estadoMatricula}`;
       indexName = 'GSI3';
-      sk = '';
+      sk = 'ALU';
     }
 
     const queryOptions: any = {

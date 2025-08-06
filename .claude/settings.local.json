@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(claude logout)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

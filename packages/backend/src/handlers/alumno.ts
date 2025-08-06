@@ -87,13 +87,13 @@ async function getAlumnos(
     });
 
     if (!paginationValidation.success) {
-      return paginationValidation.response;
+      return (paginationValidation as any).response;
     }
 
     // Validar filtros
     const filtrosValidation = validateRequest(filtrosAlumnoSchema, queryParams);
     if (!filtrosValidation.success) {
-      return filtrosValidation.response;
+      return (filtrosValidation as any).response;
     }
 
     const { page, limit } = paginationValidation.data;
@@ -191,7 +191,7 @@ async function createAlumno(
 
     const validation = validateRequest(alumnoSchema, body);
     if (!validation.success) {
-      return validation.response;
+      return (validation as any).response;
     }
 
     const { universidadId } = validation.data;
@@ -215,7 +215,7 @@ async function createAlumno(
       return conflictResponse('Ya existe un alumno con este email');
     }
 
-    const alumno = await repository.create(validation.data);
+    const alumno = await repository.create(validation.data as any);
     logger.info('Alumno created successfully', { cedula: alumno.cedula });
 
     return createdResponse(alumno, 'Alumno creado exitosamente');
@@ -261,7 +261,7 @@ async function updateAlumno(
     // Validar datos parciales
     const validation = validateRequest(alumnoSchema.partial(), body);
     if (!validation.success) {
-      return validation.response;
+      return (validation as any).response;
     }
 
     logger.info('Updating alumno', { cedula, universidadId });
@@ -337,14 +337,25 @@ async function importarAlumnos(
     logger.info('Starting bulk import', { universidadId });
 
     try {
+      // Log the first 200 chars of CSV to debug
+      logger.info('CSV data received', { 
+        csvLength: csvData.length,
+        csvSample: csvData.substring(0, 200) 
+      });
+      
       // Parsear CSV
       const records = parse(csvData, {
         columns: true,
         skip_empty_lines: true,
-        delimiter: ','
+        delimiter: ',',
+        trim: true,
+        relax_quotes: true
       });
 
-      logger.info('Parsed CSV records', { count: records.length });
+      logger.info('Parsed CSV records', { 
+        count: records.length,
+        firstRecord: records[0] 
+      });
 
       const results = {
         processed: 0,
@@ -352,6 +363,15 @@ async function importarAlumnos(
         errors: [] as any[],
         warnings: [] as any[]
       };
+      
+      // Si no hay registros, retornar inmediatamente
+      if (!records || records.length === 0) {
+        logger.warn('No records found in CSV');
+        return successResponse({
+          ...results,
+          summary: 'No se encontraron registros en el archivo CSV'
+        }, 'No se encontraron registros para procesar');
+      }
 
       const validAlumnos: any[] = [];
 
@@ -367,30 +387,44 @@ async function importarAlumnos(
             nombre: record.nombre?.trim(),
             apellido: record.apellido?.trim(),
             email: record.email?.trim().toLowerCase(),
-            telefono: record.telefono?.trim(),
+            telefono: record.telefono?.trim() || undefined,
             carreraId: record.carreraId?.trim() || record.carreraCodigo?.trim(),
-            facultadId: record.facultadId?.trim(),
+            facultadId: record.facultadId?.trim() || 'FAC001', // Valor por defecto
             universidadId,
             promedioNotas: parseFloat(record.promedioNotas || '0'),
             creditosAprobados: parseInt(record.creditosAprobados || '0'),
             creditosTotales: parseInt(record.creditosTotales || '1'),
             semestreActual: parseInt(record.semestreActual || '1'),
-            fechaIngreso: record.fechaIngreso?.trim() || new Date().toISOString(),
+            fechaIngreso: record.fechaIngreso?.trim() || new Date().toISOString().split('T')[0],
             estadoMatricula: record.estadoMatricula?.trim() || 'ACTIVO',
             activo: true
           };
 
+          // Log the data to be validated
+          logger.debug('Validating alumno data', { 
+            row: i + 2,
+            alumnoData 
+          });
+          
           // Validar con esquema
           const validation = validateRequest(importacionAlumnoSchema, alumnoData);
           if (!validation.success) {
+            logger.warn('Validation failed for alumno', {
+              row: i + 2,
+              cedula: record.cedula,
+              validationError: (validation as any).response
+            });
             results.errors.push({
               row: i + 2, // +2 porque empezamos en 0 y hay header
               cedula: record.cedula,
-              errors: validation.response
+              errors: (validation as any).response
             });
             continue;
           }
 
+          logger.info('Alumno validated successfully', { 
+            cedula: validation.data.cedula 
+          });
           validAlumnos.push(validation.data);
         } catch (error) {
           results.errors.push({
@@ -403,14 +437,44 @@ async function importarAlumnos(
 
       // Crear alumnos en batch
       if (validAlumnos.length > 0) {
+        logger.info('About to create alumnos in batch', { 
+          count: validAlumnos.length,
+          firstAlumno: validAlumnos[0]
+        });
+        
         try {
           await repository.batchCreate(validAlumnos);
           results.created = validAlumnos.length;
-          logger.info('Batch import completed successfully', { created: results.created });
+          logger.info('Batch import completed successfully', { 
+            created: results.created,
+            totalProcessed: results.processed
+          });
         } catch (error) {
           logger.error('Error in batch create', error);
-          return internalErrorResponse('Error creando alumnos en batch');
+          // Intentar crear uno por uno para identificar el problema
+          logger.info('Trying individual creation to identify issues');
+          for (const alumno of validAlumnos) {
+            try {
+              await repository.create(alumno);
+              results.created++;
+            } catch (individualError) {
+              logger.error('Error creating individual alumno', {
+                cedula: alumno.cedula,
+                error: individualError
+              });
+              results.errors.push({
+                row: 0,
+                cedula: alumno.cedula,
+                error: 'Error al crear alumno'
+              });
+            }
+          }
         }
+      } else {
+        logger.warn('No valid alumnos to create after validation', {
+          processed: results.processed,
+          errors: results.errors.length
+        });
       }
 
       const message = `Importación completada. ${results.created} alumnos creados, ${results.errors.length} errores.`;

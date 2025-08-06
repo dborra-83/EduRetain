@@ -33,9 +33,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
+
+  // Redirigir si ya está autenticado
+  React.useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   const {
     control,

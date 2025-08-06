@@ -1,0 +1,3 @@
+cedula,nombre,apellido,email,telefono,carreraId,promedioNotas,creditosAprobados,creditosTotales,semestreActual,fechaIngreso
+12345678,Juan,Pérez,juan.perez@email.com,3001234567,ING001,3.5,45,60,5,2022-01-15
+87654321,María,González,maria.gonzalez@email.com,3007654321,MED002,4.2,80,120,7,2021-08-20

@@ -89,19 +89,23 @@ export const usuarioSchema = z.object({
   activo: z.boolean().default(true)
 });
 
-// Importación CSV Schema
+// Importación CSV Schema - más flexible para el CSV
 export const importacionAlumnoSchema = z.object({
   cedula: z.string().min(1),
   nombre: z.string().min(1),
   apellido: z.string().min(1),
   email: z.string().email(),
   telefono: z.string().optional(),
-  carreraCodigo: z.string().min(1),
+  carreraId: z.string().min(1),
+  facultadId: z.string().optional(),
+  universidadId: z.string().min(1),
   promedioNotas: z.number().min(0).max(5),
   creditosAprobados: z.number().min(0),
   creditosTotales: z.number().min(1),
   semestreActual: z.number().min(1),
-  fechaIngreso: z.string()
+  fechaIngreso: z.string(),
+  estadoMatricula: z.string().optional(),
+  activo: z.boolean().default(true)
 });
 
 // Query Parameters

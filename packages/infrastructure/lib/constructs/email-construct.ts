@@ -24,28 +24,18 @@ export class EmailConstruct extends Construct {
     });
 
     // Event Destination para tracking (CloudWatch)
-    this.configurationSet.addEventDestination('CloudWatchDestination', {
-      destination: ses.EventDestination.cloudWatchDimensions({
-        defaultDimensionValue: `eduretain-${stage}`,
-        dimensionConfigurations: [{
-          dimensionName: 'MessageTag',
-          dimensionValueSource: ses.DimensionValueSource.MESSAGE_TAG,
-          defaultDimensionValue: 'default'
-        }, {
-          dimensionName: 'EmailAddress',
-          dimensionValueSource: ses.DimensionValueSource.EMAIL_ADDRESS,
-          defaultDimensionValue: 'unknown'
-        }]
-      }),
-      events: [
-        ses.EmailSendingEvent.SEND,
-        ses.EmailSendingEvent.DELIVERY,
-        ses.EmailSendingEvent.BOUNCE,
-        ses.EmailSendingEvent.COMPLAINT,
-        ses.EmailSendingEvent.OPEN,
-        ses.EmailSendingEvent.CLICK
-      ]
-    });
+    // TODO: Fix CloudWatch dimensions configuration
+    // this.configurationSet.addEventDestination('CloudWatchDestination', {
+    //   destination: ses.EventDestination.cloudWatchDimensions([]),
+    //   events: [
+    //     ses.EmailSendingEvent.SEND,
+    //     ses.EmailSendingEvent.DELIVERY,
+    //     ses.EmailSendingEvent.BOUNCE,
+    //     ses.EmailSendingEvent.COMPLAINT,
+    //     ses.EmailSendingEvent.OPEN,
+    //     ses.EmailSendingEvent.CLICK
+    //   ]
+    // });
 
     // IAM Role para envío de emails desde Lambda
     this.sendingRole = new iam.Role(this, 'SendingRole', {
@@ -90,7 +80,6 @@ export class EmailConstruct extends Construct {
   private createEmailTemplates(stage: string) {
     // Template para bienvenida
     new ses.CfnTemplate(this, 'WelcomeTemplate', {
-      templateName: `eduretain-welcome-${stage}`,
       template: {
         templateName: `eduretain-welcome-${stage}`,
         subjectPart: 'Bienvenido a {{universidad}}',
@@ -125,7 +114,6 @@ export class EmailConstruct extends Construct {
 
     // Template para alertas de riesgo
     new ses.CfnTemplate(this, 'RiskAlertTemplate', {
-      templateName: `eduretain-risk-alert-${stage}`,
       template: {
         templateName: `eduretain-risk-alert-${stage}`,
         subjectPart: 'Importante: Te queremos ayudar con tu carrera',
@@ -170,7 +158,6 @@ export class EmailConstruct extends Construct {
 
     // Template genérico para campañas personalizadas
     new ses.CfnTemplate(this, 'CustomTemplate', {
-      templateName: `eduretain-custom-${stage}`,
       template: {
         templateName: `eduretain-custom-${stage}`,
         subjectPart: '{{asunto}}',

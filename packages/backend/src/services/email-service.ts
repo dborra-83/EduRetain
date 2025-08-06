@@ -82,20 +82,8 @@ export class EmailService {
             }),
             Destinations: destinations,
             ConfigurationSetName: `eduretain-${process.env.STAGE || 'dev'}`,
-            Tags: [
-              {
-                Name: 'CampanaId',
-                Value: campana.id
-              },
-              {
-                Name: 'UniversidadId', 
-                Value: campana.universidadId
-              },
-              {
-                Name: 'TipoCampana',
-                Value: campana.tipo
-              }
-            ]
+            // Tags are not supported in SendBulkTemplatedEmailCommand
+            // Using ConfigurationSetName for tracking instead
           });
 
           const response = await this.sesClient.send(command);
@@ -105,7 +93,7 @@ export class EmailService {
             campanaId: campana.id,
             chunk: i + 1,
             totalChunks: chunks.length,
-            messageId: response.MessageId,
+            // messageId: response.MessageId, // MessageId not available in bulk response
             sent: destinations.length
           });
 

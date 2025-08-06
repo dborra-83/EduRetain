@@ -72,6 +72,11 @@ function ImportarPage() {
   const { user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  
+  // Debug user info
+  React.useEffect(() => {
+    console.log('Current user in ImportarPage:', user);
+  }, [user]);
 
   const [csvData, setCsvData] = useState<string>('');
   const [parsedData, setParsedData] = useState<ParsedRow[]>([]);
@@ -80,20 +85,50 @@ function ImportarPage() {
 
   const importMutation = useMutation(
     async (data: { csvData: string; universidadId: string }) => {
+      console.log('Sending import request:', data);
       const response = await apiClient.alumnos.import(data);
-      return response.data.data;
+      console.log('Import response:', response);
+      return response.data;
     },
     {
-      onSuccess: (result: ImportResult) => {
-        setImportResult(result);
-        enqueueSnackbar(result.summary, { 
-          variant: result.errors.length > 0 ? 'warning' : 'success' 
+      onSuccess: (result: any) => {
+        console.log('Import success - raw result:', result);
+        
+        // El resultado viene en result.data cuando es exitoso
+        const importData = result?.data || result || {};
+        
+        // Asegurar que el resultado tenga la estructura esperada
+        const formattedResult: ImportResult = {
+          processed: importData.processed || 0,
+          created: importData.created || 0,
+          errors: importData.errors || [],
+          warnings: importData.warnings || [],
+          summary: importData.summary || result?.message || 'Importación completada'
+        };
+        
+        console.log('Formatted result:', formattedResult);
+        
+        setImportResult(formattedResult);
+        enqueueSnackbar(result?.message || formattedResult.summary, { 
+          variant: formattedResult.errors && formattedResult.errors.length > 0 ? 'warning' : 'success' 
         });
         queryClient.invalidateQueries(['alumnos']);
         queryClient.invalidateQueries(['dashboard']);
+        
+        // Limpiar el CSV data y parsed data después de importación exitosa
+        setCsvData('');
+        setParsedData([]);
+        
+        // Auto-ocultar el resultado después de 10 segundos si no hay errores
+        if (!formattedResult.errors || formattedResult.errors.length === 0) {
+          setTimeout(() => {
+            setImportResult(null);
+          }, 10000);
+        }
       },
       onError: (error: any) => {
-        console.error('Import error:', error);
+        console.error('Import error - full details:', error);
+        console.error('Error response:', error.response);
         enqueueSnackbar('Error durante la importación', { variant: 'error' });
       }
     }
@@ -116,7 +151,7 @@ function ImportarPage() {
           setParsedData(parsed.filter(row => row.cedula)); // Filter empty rows
           setShowPreview(true);
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('CSV Parse error:', error);
           enqueueSnackbar('Error parseando el archivo CSV', { variant: 'error' });
         }
@@ -141,6 +176,12 @@ function ImportarPage() {
       enqueueSnackbar('Universidad ID no disponible', { variant: 'error' });
       return;
     }
+
+    console.log('Importing CSV:', {
+      csvLength: csvData.length,
+      universidadId: user.universidadId,
+      csvPreview: csvData.substring(0, 200)
+    });
 
     importMutation.mutate({
       csvData,
@@ -312,7 +353,7 @@ function ImportarPage() {
                   <strong>{importResult.processed}</strong> registros procesados
                 </Typography>
               </Box>
-              {importResult.errors.length > 0 && (
+              {importResult.errors && importResult.errors.length > 0 && (
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Error color="error" sx={{ mr: 1 }} />
                   <Typography>
@@ -322,7 +363,7 @@ function ImportarPage() {
               )}
             </Box>
 
-            {importResult.errors.length > 0 && (
+            {importResult.errors && importResult.errors.length > 0 && (
               <>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="h6" gutterBottom color="error">
@@ -344,7 +385,9 @@ function ImportarPage() {
                           <TableCell>{error.cedula}</TableCell>
                           <TableCell>
                             <Typography variant="body2" color="error">
-                              {error.errors}
+                              {typeof error.errors === 'object' 
+                                ? JSON.stringify(error.errors) 
+                                : error.errors}
                             </Typography>
                           </TableCell>
                         </TableRow>
@@ -352,7 +395,7 @@ function ImportarPage() {
                     </TableBody>
                   </Table>
                 </TableContainer>
-                {importResult.errors.length > 10 && (
+                {importResult.errors && importResult.errors.length > 10 && (
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                     ... y {importResult.errors.length - 10} errores más
                   </Typography>

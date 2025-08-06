@@ -59,8 +59,18 @@ export interface Alumno {
   estadoMatricula: EstadoMatricula;
   fechaIngreso: string;
   ultimaActividad?: string;
+  // Nuevos campos para deserción
+  porcentajeAsistencia?: number; // 0-100
+  materiasPendientes?: number;
+  actividadSistema1?: string; // última fecha de login sistema 1
+  actividadSistema2?: string; // última fecha de login sistema 2
+  actividadSistema3?: string; // última fecha de login sistema 3
+  ultimoIngresoCampus?: string; // última fecha de ingreso físico
+  estadoSocioEconomico?: 'BAJO' | 'MEDIO_BAJO' | 'MEDIO' | 'MEDIO_ALTO' | 'ALTO';
+  cantidadCampanasRecibidas?: number;
   // Predictivo
   riesgoDesercion: RiesgoDesercion;
+  probabilidadDesercion?: number; // 0-100 porcentaje calculado por IA
   factoresRiesgo: string[];
   // Metadata
   fechaCreacion: string;

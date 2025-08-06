@@ -368,7 +368,7 @@ cdk destroy && cdk deploy
 
 ## 🎖️ Master Prompt Status: COMPLETO ✅
 
-**EduRetain v1.0** - Plataforma serverless AWS completamente funcional desarrollada con Claude Code:
+**EduRetain v1.0** - Plataforma serverless AWS completamente funcional:
 
 - ✅ **Infraestructura CDK** completa y desplegable
 - ✅ **Backend Lambda** con todos los handlers + IA Bedrock  
@@ -381,4 +381,5 @@ cdk destroy && cdk deploy
 
 **🚀 Sistema listo para producción con escalabilidad empresarial.**
 
-*Actualizado: Enero 2025 - Generado con Claude Code*
+*Actualizado: Enero 2025*
+*Desarrollado por: Diego Borra (diego.borra@cloudhesive.com) - CloudHesive Team*

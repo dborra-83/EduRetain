@@ -176,7 +176,7 @@ const baseTheme: ThemeOptions = {
 };
 
 // Dark theme variant
-const darkTheme: ThemeOptions = {
+const darkThemeOptions: ThemeOptions = {
   ...baseTheme,
   palette: {
     mode: 'dark',
@@ -193,6 +193,6 @@ const darkTheme: ThemeOptions = {
 };
 
 export const lightTheme = createTheme(baseTheme);
-export const darkTheme = createTheme(darkTheme);
+export const darkTheme = createTheme(darkThemeOptions);
 
 export default lightTheme;

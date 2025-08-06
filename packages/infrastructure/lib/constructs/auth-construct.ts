@@ -43,9 +43,10 @@ export class AuthConstruct extends Construct {
         sms: false,
         otp: true
       },
-      advancedSecurityMode: stage === 'prod' ? 
-        cognito.AdvancedSecurityMode.ENFORCED : 
-        cognito.AdvancedSecurityMode.AUDIT,
+      // advancedSecurityMode requires Plus feature plan
+      // advancedSecurityMode: stage === 'prod' ? 
+      //   cognito.AdvancedSecurityMode.ENFORCED : 
+      //   cognito.AdvancedSecurityMode.AUDIT,
       removalPolicy: stage === 'prod' ? 
         cdk.RemovalPolicy.RETAIN : 
         cdk.RemovalPolicy.DESTROY,

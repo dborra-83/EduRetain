@@ -277,7 +277,7 @@ async function enviarMetricasCloudWatch(
 
     const command = new PutMetricDataCommand({
       Namespace: 'EduRetain',
-      MetricData: metricData
+      MetricData: metricData as any
     });
 
     await cloudWatch.send(command);

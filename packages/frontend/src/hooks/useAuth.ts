@@ -73,6 +73,16 @@ export const useAuthProvider = () => {
 
   const login = async (email: string, password: string) => {
     try {
+      // Si ya hay un usuario autenticado, cerrar sesión primero
+      try {
+        const currentUser = await getCurrentAuthenticatedUser();
+        if (currentUser) {
+          await signOut();
+        }
+      } catch {
+        // No hay usuario actual, continuar
+      }
+      
       await signIn({ username: email, password });
       await refreshUser();
     } catch (error) {

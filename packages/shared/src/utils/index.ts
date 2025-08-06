@@ -32,22 +32,57 @@ export const calcularRiesgoDesercion = (alumno: {
   creditosTotales: number;
   semestreActual: number;
   ultimaActividad?: string;
-}): { riesgo: RiesgoDesercion; factores: string[] } => {
+  porcentajeAsistencia?: number;
+  materiasPendientes?: number;
+  actividadSistema1?: string;
+  actividadSistema2?: string;
+  actividadSistema3?: string;
+  ultimoIngresoCampus?: string;
+  estadoSocioEconomico?: string;
+}): { riesgo: RiesgoDesercion; factores: string[]; probabilidad: number } => {
   const factores: string[] = [];
   let puntajeRiesgo = 0;
 
-  // Factor: Promedio de notas
+  // Factor: Promedio de notas (0-30 puntos)
   if (alumno.promedioNotas < 2.0) {
     puntajeRiesgo += 30;
     factores.push('Promedio académico muy bajo');
   } else if (alumno.promedioNotas < 3.0) {
     puntajeRiesgo += 20;
     factores.push('Promedio académico bajo');
+  } else if (alumno.promedioNotas < 3.5) {
+    puntajeRiesgo += 10;
   }
 
-  // Factor: Progreso académico
-  const progresoEsperado = (alumno.semestreActual / 10) * alumno.creditosTotales;
+  // Factor: Asistencia (0-25 puntos)
+  if (alumno.porcentajeAsistencia !== undefined) {
+    if (alumno.porcentajeAsistencia < 50) {
+      puntajeRiesgo += 25;
+      factores.push('Asistencia muy baja (<50%)');
+    } else if (alumno.porcentajeAsistencia < 70) {
+      puntajeRiesgo += 15;
+      factores.push('Asistencia baja (<70%)');
+    } else if (alumno.porcentajeAsistencia < 80) {
+      puntajeRiesgo += 8;
+    }
+  }
+
+  // Factor: Materias pendientes (0-20 puntos)
+  if (alumno.materiasPendientes !== undefined) {
+    if (alumno.materiasPendientes >= 4) {
+      puntajeRiesgo += 20;
+      factores.push('Más de 4 materias pendientes');
+    } else if (alumno.materiasPendientes >= 2) {
+      puntajeRiesgo += 12;
+      factores.push('2-3 materias pendientes');
+    } else if (alumno.materiasPendientes >= 1) {
+      puntajeRiesgo += 5;
+    }
+  }
+
+  // Factor: Progreso académico (0-25 puntos)
   const progreso = alumno.creditosAprobados / alumno.creditosTotales;
+  const progresoEsperado = (alumno.semestreActual / 10) * alumno.creditosTotales;
   
   if (progreso < 0.3) {
     puntajeRiesgo += 25;
@@ -55,42 +90,73 @@ export const calcularRiesgoDesercion = (alumno: {
   } else if (progreso < 0.5) {
     puntajeRiesgo += 15;
     factores.push('Progreso académico lento');
+  } else if (progreso < 0.7) {
+    puntajeRiesgo += 8;
   }
 
-  // Factor: Última actividad
-  if (alumno.ultimaActividad) {
-    const diasSinActividad = Math.floor(
-      (Date.now() - new Date(alumno.ultimaActividad).getTime()) / (1000 * 60 * 60 * 24)
-    );
-    
-    if (diasSinActividad > 30) {
-      puntajeRiesgo += 20;
-      factores.push('Más de 30 días sin actividad');
-    } else if (diasSinActividad > 15) {
-      puntajeRiesgo += 10;
-      factores.push('Más de 15 días sin actividad');
-    }
+  // Factor: Actividad en sistemas (0-20 puntos)
+  const calcularDiasSinActividad = (fecha?: string) => {
+    if (!fecha) return 999;
+    return Math.floor((Date.now() - new Date(fecha).getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const diasSistema1 = calcularDiasSinActividad(alumno.actividadSistema1);
+  const diasSistema2 = calcularDiasSinActividad(alumno.actividadSistema2);
+  const diasSistema3 = calcularDiasSinActividad(alumno.actividadSistema3);
+  const minDias = Math.min(diasSistema1, diasSistema2, diasSistema3);
+
+  if (minDias > 30) {
+    puntajeRiesgo += 20;
+    factores.push('Más de 30 días sin actividad en sistemas');
+  } else if (minDias > 14) {
+    puntajeRiesgo += 12;
+    factores.push('Más de 2 semanas sin actividad en sistemas');
+  } else if (minDias > 7) {
+    puntajeRiesgo += 5;
   }
 
-  // Factor: Semestre avanzado con pocos créditos
-  if (alumno.semestreActual > 6 && progreso < 0.6) {
+  // Factor: Ingreso al campus (0-15 puntos)
+  const diasSinCampus = calcularDiasSinActividad(alumno.ultimoIngresoCampus);
+  if (diasSinCampus > 30) {
     puntajeRiesgo += 15;
+    factores.push('Más de 30 días sin ingresar al campus');
+  } else if (diasSinCampus > 14) {
+    puntajeRiesgo += 8;
+  } else if (diasSinCampus > 7) {
+    puntajeRiesgo += 3;
+  }
+
+  // Factor: Estado socioeconómico (0-15 puntos)
+  if (alumno.estadoSocioEconomico === 'BAJO') {
+    puntajeRiesgo += 15;
+    factores.push('Situación socioeconómica vulnerable');
+  } else if (alumno.estadoSocioEconomico === 'MEDIO_BAJO') {
+    puntajeRiesgo += 8;
+  }
+
+  // Factor: Semestre avanzado con bajo progreso (0-10 puntos)
+  if (alumno.semestreActual > 6 && progreso < 0.6) {
+    puntajeRiesgo += 10;
     factores.push('Semestre avanzado con bajo progreso');
   }
 
-  // Determinar nivel de riesgo
+  // Calcular probabilidad de deserción (0-100%)
+  // Máximo puntaje posible: 150 puntos
+  const probabilidad = Math.min(100, Math.round((puntajeRiesgo / 150) * 100));
+
+  // Determinar nivel de riesgo basado en probabilidad
   let riesgo: RiesgoDesercion;
-  if (puntajeRiesgo >= 70) {
+  if (probabilidad >= 70) {
     riesgo = RiesgoDesercion.CRITICO;
-  } else if (puntajeRiesgo >= 50) {
+  } else if (probabilidad >= 50) {
     riesgo = RiesgoDesercion.ALTO;
-  } else if (puntajeRiesgo >= 25) {
+  } else if (probabilidad >= 30) {
     riesgo = RiesgoDesercion.MEDIO;
   } else {
     riesgo = RiesgoDesercion.BAJO;
   }
 
-  return { riesgo, factores };
+  return { riesgo, factores, probabilidad };
 };
 
 // Validar email
