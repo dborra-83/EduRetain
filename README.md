@@ -463,6 +463,72 @@ npx cdk deploy EduRetainProd --profile eduretain-prod --rollback
 | USER_POOL_ID | us-east-1_XXX | us-east-1_YYY | Cognito User Pool |
 | IDENTITY_POOL_ID | us-east-1:XXX | us-east-1:YYY | Cognito Identity Pool |
 
+### 🔐 Permisos AWS Requeridos
+
+#### Usuario/Role para Despliegue
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:*",
+        "iam:*",
+        "lambda:*",
+        "apigateway:*",
+        "dynamodb:*",
+        "cognito-idp:*",
+        "s3:*",
+        "cloudfront:*",
+        "ses:*",
+        "cloudwatch:*",
+        "logs:*",
+        "bedrock:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+### 💡 Configuraciones Importantes
+
+#### Amazon Bedrock Setup
+```bash
+# Habilitar modelos en AWS Console
+# Ir a Bedrock > Model access > Request model access
+# Solicitar acceso a: Claude 3.5 Sonnet
+```
+
+#### SES Configuration
+```bash
+# Verificar dominio para emails
+aws ses verify-domain-identity --domain tu-dominio.com --region us-east-1
+
+# Mover fuera del sandbox (producción)
+# AWS Console > SES > Account dashboard > Request production access
+```
+
+### 🚨 Troubleshooting Común
+
+| Error | Solución |
+|-------|----------|
+| `CDK bootstrap required` | `cdk bootstrap aws://ACCOUNT/REGION` |
+| `Insufficient permissions` | Verificar IAM policies |
+| `Domain already exists` | Usar dominio diferente en SES |
+| `Lambda timeout` | Aumentar timeout en CDK |
+| `DynamoDB throttling` | Ajustar read/write capacity |
+
+### 📊 Costos Estimados (USD/mes)
+
+| Ambiente | Usuarios | DynamoDB | Lambda | API Gateway | Storage | Total |
+|----------|----------|----------|--------|-------------|---------|-------|
+| **Dev** | <50 | $5-10 | $10-20 | $5-10 | $5-10 | **$25-50** |
+| **Prod** | 1000+ | $50-100 | $100-200 | $50-100 | $50-100 | **$250-500** |
+
+*Costos pueden variar según uso real y región AWS*
+
 
 ## 📊 Funcionalidades Detalladas
 
