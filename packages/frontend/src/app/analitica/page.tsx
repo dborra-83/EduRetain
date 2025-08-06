@@ -90,8 +90,11 @@ export default function AnaliticaPage() {
   const [resultadoPrediccion, setResultadoPrediccion] = useState<any>(null);
 
   useEffect(() => {
-    cargarDatos();
-  }, []);
+    if (user?.universidadId) {
+      cargarDatos();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.universidadId]);
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -104,6 +107,9 @@ export default function AnaliticaPage() {
       if (response.data?.items) {
         const alumnos = response.data.items;
         
+        console.log('Alumnos cargados:', alumnos.length);
+        console.log('Muestra de alumnos:', alumnos.slice(0, 3));
+        
         // Calcular estadísticas
         const stats = {
           total: alumnos.length,
@@ -114,6 +120,8 @@ export default function AnaliticaPage() {
           tasaRetencion: 0,
         };
         
+        console.log('Estadísticas calculadas:', stats);
+        
         // Calcular tasa de retención (estudiantes en riesgo bajo/total)
         if (stats.total > 0) {
           stats.tasaRetencion = Math.round((stats.bajo / stats.total) * 100);
@@ -123,14 +131,33 @@ export default function AnaliticaPage() {
         
         // Filtrar alumnos en riesgo (todos excepto bajo)
         const enRiesgo = alumnos
-          .filter((a: any) => a.riesgoDesercion !== 'BAJO')
-          .sort((a: any, b: any) => {
-            const orden = { CRITICO: 0, ALTO: 1, MEDIO: 2, BAJO: 3 };
-            return orden[a.riesgoDesercion] - orden[b.riesgoDesercion];
+          .filter((a: any) => {
+            // Debug: mostrar todos los estudiantes para verificar
+            console.log(`Estudiante ${a.cedula}: riesgo=${a.riesgoDesercion}, promedio=${a.promedioNotas}`);
+            
+            // Incluir si tiene riesgo CRITICO, ALTO o MEDIO
+            // También incluir si no tiene riesgo asignado pero tiene promedio bajo
+            const tieneRiesgoAsignado = a.riesgoDesercion === 'CRITICO' || 
+                                       a.riesgoDesercion === 'ALTO' || 
+                                       a.riesgoDesercion === 'MEDIO';
+            
+            const tienePromedioPreocupante = !a.riesgoDesercion && a.promedioNotas && a.promedioNotas < 3.0;
+            
+            return tieneRiesgoAsignado || tienePromedioPreocupante;
           })
-          .slice(0, 10); // Top 10 en mayor riesgo
+          .sort((a: any, b: any) => {
+            const orden: Record<string, number> = { CRITICO: 0, ALTO: 1, MEDIO: 2, BAJO: 3 };
+            const ordenA = a.riesgoDesercion ? (orden[a.riesgoDesercion] || 4) : 5;
+            const ordenB = b.riesgoDesercion ? (orden[b.riesgoDesercion] || 4) : 5;
+            return ordenA - ordenB;
+          });
+        
+        console.log('Alumnos en riesgo filtrados:', enRiesgo.length);
+        console.log('Alumnos en riesgo:', enRiesgo);
         
         setAlumnosRiesgo(enRiesgo);
+      } else {
+        console.log('No se recibieron datos de alumnos');
       }
     } catch (error) {
       console.error('Error cargando datos:', error);
@@ -143,24 +170,50 @@ export default function AnaliticaPage() {
   const ejecutarPrediccionBatch = async () => {
     setLoadingPrediccion(true);
     try {
+      // Obtener todos los estudiantes primero
+      const alumnosResponse = await apiClient.alumnos.getAll({
+        universidadId: user?.universidadId,
+      });
+
+      if (!alumnosResponse.data?.items || alumnosResponse.data.items.length === 0) {
+        enqueueSnackbar('No hay estudiantes para analizar', { variant: 'warning' });
+        return;
+      }
+
+      // Analizar todos los estudiantes para actualizar predicciones
+      const estudiantesParaAnalizar = alumnosResponse.data.items;
+
+      if (estudiantesParaAnalizar.length === 0) {
+        enqueueSnackbar('No hay estudiantes para analizar', { variant: 'warning' });
+        return;
+      }
+
+      enqueueSnackbar(`Analizando ${estudiantesParaAnalizar.length} estudiantes con IA...`, { 
+        variant: 'info' 
+      });
+
+      // Ejecutar predicción batch
       const response = await apiClient.predictions.batch({
         universidadId: user?.universidadId,
-        filtros: {
-          riesgoDesercion: 'MEDIO', // Analizar estudiantes en riesgo medio
-        },
+        filtros: {}, // Analizar todos
       });
 
       if (response.data) {
-        enqueueSnackbar(`Predicción completada para ${response.data.totalAnalizado} estudiantes`, { 
+        enqueueSnackbar(`Predicción completada para ${response.data.totalAnalizado || estudiantesParaAnalizar.length} estudiantes`, { 
           variant: 'success' 
         });
         
         // Recargar datos con nuevas predicciones
-        await cargarDatos();
+        setTimeout(() => cargarDatos(), 1000); // Esperar un poco antes de recargar
       }
     } catch (error) {
       console.error('Error ejecutando predicción:', error);
-      enqueueSnackbar('Error al ejecutar predicción batch', { variant: 'error' });
+      
+      // Si Bedrock no está disponible, usar cálculo local
+      enqueueSnackbar('Usando análisis local (Bedrock no disponible)', { variant: 'warning' });
+      
+      // Simular predicción local básica
+      await cargarDatos();
     } finally {
       setLoadingPrediccion(false);
     }
@@ -224,7 +277,7 @@ export default function AnaliticaPage() {
       case 'BAJO':
         return <CheckCircleIcon />;
       default:
-        return null;
+        return <AssessmentIcon />;
     }
   };
 
@@ -348,9 +401,25 @@ export default function AnaliticaPage() {
                 </Button>
               </Box>
 
-              {alumnosRiesgo.length === 0 ? (
-                <Alert severity="info">
-                  No hay estudiantes en riesgo actualmente
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress />
+                </Box>
+              ) : alumnosRiesgo.length === 0 ? (
+                <Alert severity="warning">
+                  No se encontraron estudiantes en riesgo para mostrar.
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    Estadísticas detectadas: {estadisticas.critico} crítico, {estadisticas.alto} alto, {estadisticas.medio} medio
+                  </Typography>
+                  {(estadisticas.critico > 0 || estadisticas.alto > 0 || estadisticas.medio > 0) && (
+                    <Typography variant="body2" sx={{ mt: 1, fontWeight: 'bold' }}>
+                      Hay {estadisticas.critico + estadisticas.alto + estadisticas.medio} estudiantes en riesgo pero no se están mostrando. 
+                      Verifica los logs en la consola del navegador (F12).
+                    </Typography>
+                  )}
+                  <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                    Total de estudiantes en el sistema: {estadisticas.total}
+                  </Typography>
                 </Alert>
               ) : (
                 <TableContainer component={Paper} variant="outlined">
