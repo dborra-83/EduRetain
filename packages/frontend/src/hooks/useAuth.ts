@@ -75,7 +75,7 @@ export const useAuthProvider = () => {
     try {
       // Si ya hay un usuario autenticado, cerrar sesión primero
       try {
-        const currentUser = await getCurrentAuthenticatedUser();
+        const currentUser = await getCurrentUser();
         if (currentUser) {
           await signOut();
         }

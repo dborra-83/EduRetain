@@ -199,6 +199,57 @@ export default function NuevaCampanaPage() {
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
+                  <InputLabel>Carreras</InputLabel>
+                  <Select
+                    multiple
+                    value={formData.filtros.carreras}
+                    onChange={(e) => updateFiltros('carreras', e.target.value)}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {(selected as string[]).map((value) => (
+                          <Chip key={value} label={value} size="small" />
+                        ))}
+                      </Box>
+                    )}
+                  >
+                    <MenuItem value="INGENIERIA_SISTEMAS">Ingeniería de Sistemas</MenuItem>
+                    <MenuItem value="INGENIERIA_INDUSTRIAL">Ingeniería Industrial</MenuItem>
+                    <MenuItem value="ADMINISTRACION">Administración de Empresas</MenuItem>
+                    <MenuItem value="PSICOLOGIA">Psicología</MenuItem>
+                    <MenuItem value="DERECHO">Derecho</MenuItem>
+                    <MenuItem value="MEDICINA">Medicina</MenuItem>
+                    <MenuItem value="ARQUITECTURA">Arquitectura</MenuItem>
+                    <MenuItem value="CONTADURIA">Contaduría Pública</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Semestres</InputLabel>
+                  <Select
+                    multiple
+                    value={formData.filtros.semestres}
+                    onChange={(e) => updateFiltros('semestres', e.target.value)}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {(selected as number[]).map((value) => (
+                          <Chip key={value} label={`Semestre ${value}`} size="small" />
+                        ))}
+                      </Box>
+                    )}
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((sem) => (
+                      <MenuItem key={sem} value={sem}>
+                        Semestre {sem}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
                   <InputLabel>Estados de Matrícula</InputLabel>
                   <Select
                     multiple
@@ -215,6 +266,7 @@ export default function NuevaCampanaPage() {
                     <MenuItem value="ACTIVO">Activo</MenuItem>
                     <MenuItem value="INACTIVO">Inactivo</MenuItem>
                     <MenuItem value="SUSPENDIDO">Suspendido</MenuItem>
+                    <MenuItem value="GRADUADO">Graduado</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
