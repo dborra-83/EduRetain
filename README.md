@@ -1011,7 +1011,7 @@ chore: cambios de build o auxiliares
 
 ## 📄 Licencia
 
-Copyright © 2025 CloudHesive. Todos los derechos reservados.
+Copyright © 2025 DBORRA. Todos los derechos reservados.
 
 Este software es propietario y confidencial. Prohibida su distribución sin autorización.
 
@@ -1034,3 +1034,5 @@ Desarrollado con ❤️ por el equipo de CloudHesive utilizando:
 *📅 Last Updated: January 2025*
 
 *⭐ If you find this project useful, please consider giving it a star on GitHub!*
+
+---
