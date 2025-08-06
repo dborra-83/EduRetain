@@ -45,7 +45,10 @@ npm run bootstrap
 
 ### 3. Configurar Variables de Entorno
 ```bash
-# Copiar archivo de ejemplo
+# Copiar archivo de ejemplo (para desarrollo local)
+cp .env.local.example .env.local
+
+# O usar el archivo general
 cp .env.example .env.local
 
 # Editar con tus valores específicos
@@ -178,8 +181,12 @@ curl https://tu-api-endpoint/v1/universidades
 
 ### 2. Verificar Frontend
 ```bash
-# Acceder al frontend
+# Acceder al frontend desplegado
 open https://tu-cloudfront-domain
+
+# O para desarrollo local (después del deploy backend)
+npm run dev
+# Acceder a http://localhost:4000
 
 # Intentar login con el usuario creado
 ```

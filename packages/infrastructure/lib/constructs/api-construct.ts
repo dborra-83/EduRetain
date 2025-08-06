@@ -125,7 +125,8 @@ export class ApiConstruct extends Construct {
       defaultCorsPreflightOptions: {
         allowOrigins: [
           stage === 'prod' ? 'https://eduretain.com' : `https://${stage}.eduretain.com`,
-          'http://localhost:3000'
+          'http://localhost:3000',
+          'http://localhost:4000'
         ],
         allowMethods: apigateway.Cors.ALL_METHODS,
         allowHeaders: [

@@ -103,13 +103,15 @@ export class AuthConstruct extends Construct {
           stage === 'prod' ? 
             'https://eduretain.com/auth/callback' : 
             `https://${stage}.eduretain.com/auth/callback`,
-          'http://localhost:3000/auth/callback' // Para desarrollo
+          'http://localhost:3000/auth/callback', // Para desarrollo puerto 3000
+          'http://localhost:4000/auth/callback'  // Para desarrollo puerto 4000
         ],
         logoutUrls: [
           stage === 'prod' ? 
             'https://eduretain.com/auth/logout' : 
             `https://${stage}.eduretain.com/auth/logout`,
-          'http://localhost:3000/auth/logout'
+          'http://localhost:3000/auth/logout', // Para desarrollo puerto 3000
+          'http://localhost:4000/auth/logout'  // Para desarrollo puerto 4000
         ]
       },
       preventUserExistenceErrors: true,

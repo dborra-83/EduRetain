@@ -104,7 +104,7 @@ nano .env.local
 # Frontend en desarrollo (requiere backend desplegado)
 npm run dev
 
-# Acceder a http://localhost:3000
+# Acceder a http://localhost:4000 (o puerto 3000 con npm run dev:3000)
 ```
 
 ## 📊 Funcionalidades Detalladas

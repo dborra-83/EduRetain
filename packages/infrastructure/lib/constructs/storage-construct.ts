@@ -41,7 +41,8 @@ export class StorageConstruct extends Construct {
       cors: [{
         allowedOrigins: [
           stage === 'prod' ? 'https://eduretain.com' : `https://${stage}.eduretain.com`,
-          'http://localhost:3000'
+          'http://localhost:3000',
+          'http://localhost:4000'
         ],
         allowedMethods: [
           s3.HttpMethods.GET,

@@ -8,13 +8,21 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=frontend",
+    "dev:3000": "npm run dev:3000 --workspace=frontend",
     "build": "npm run build --workspace=frontend",
+    "build:all": "npm run build --workspaces",
+    "start": "npm run start --workspace=frontend",
+    "start:3000": "npm run start:3000 --workspace=frontend",
     "deploy:dev": "npm run deploy:dev --workspace=infrastructure",
     "deploy:prod": "npm run deploy:prod --workspace=infrastructure",
     "lint": "npm run lint --workspaces",
     "test": "npm run test --workspaces",
     "clean": "npm run clean --workspaces",
-    "bootstrap": "npm install && npm run build --workspaces"
+    "bootstrap": "npm install && npm run build --workspaces",
+    "setup": "./dev-setup.sh",
+    "backend:build": "npm run build --workspace=backend",
+    "frontend:build": "npm run build --workspace=frontend",
+    "shared:build": "npm run build --workspace=shared"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
