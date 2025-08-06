@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude logout)",
+      "Bash(mkdir:*)"
+    ],
+    "deny": []
+  }
+}

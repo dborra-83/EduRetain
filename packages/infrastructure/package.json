@@ -1,0 +1,27 @@
+{
+  "name": "@eduretain/infrastructure",
+  "version": "1.0.0",
+  "description": "AWS CDK Infrastructure for EduRetain",
+  "scripts": {
+    "build": "tsc",
+    "synth": "cdk synth",
+    "deploy:dev": "cdk deploy --all --profile eduretain-dev",
+    "deploy:prod": "cdk deploy --all --profile eduretain-prod",
+    "destroy:dev": "cdk destroy --all --profile eduretain-dev",
+    "destroy:prod": "cdk destroy --all --profile eduretain-prod",
+    "diff": "cdk diff",
+    "bootstrap:dev": "cdk bootstrap --profile eduretain-dev",
+    "bootstrap:prod": "cdk bootstrap --profile eduretain-prod",
+    "clean": "rm -rf cdk.out dist"
+  },
+  "dependencies": {
+    "@eduretain/shared": "^1.0.0",
+    "aws-cdk-lib": "^2.110.0",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "aws-cdk": "^2.110.0"
+  }
+}
