@@ -146,7 +146,7 @@ Niveles de Riesgo:
                                 ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   SES           │    │   Bedrock       │    │   CloudWatch    │
-│   (Email)       │    │   (AI/ML)       │    │   (Monitoring)  │
+│   (Email)       │    │   (Analytics)   │    │   (Monitoring)  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -166,68 +166,324 @@ GSI2: Queries por Email
 GSI3: Queries por Estado/Riesgo
 ```
 
-## 🚀 Inicio Rápido
+## 🚀 Guía Completa de Despliegue
 
 ### Pre-requisitos
 - Node.js 18+ y npm 9+
-- AWS CLI v2 configurado
+- AWS CLI v2 configurado con credenciales
 - AWS CDK v2 (`npm install -g aws-cdk`)
 - Cuenta AWS con permisos administrativos
 - Git y Git Bash (Windows) o Terminal (Mac/Linux)
+- Dominio verificado en AWS SES (para envío de emails)
 
-### 1. Instalación
+### 📦 Preparación Inicial
+
+#### 1. Clonar y Configurar el Proyecto
 ```bash
 # Clonar repositorio
 git clone <repository-url>
 cd EduRetain
 
-# Instalar dependencias y construir packages
+# Instalar dependencias y construir todos los packages
 npm run bootstrap
 ```
 
-### 2. Configuración de Variables de Entorno
+#### 2. Configurar AWS CLI
 ```bash
-# Crear archivo de configuración para frontend
+# Configurar perfil para desarrollo
+aws configure --profile eduretain-dev
+# Ingresar:
+# - AWS Access Key ID
+# - AWS Secret Access Key
+# - Default region (ej: us-east-1)
+# - Default output format: json
+
+# Configurar perfil para producción
+aws configure --profile eduretain-prod
+# Ingresar credenciales de producción
+```
+
+#### 3. Bootstrap CDK (Primera vez por región/cuenta)
+```bash
+# Para desarrollo
+cd packages/infrastructure
+npx cdk bootstrap aws://ACCOUNT-ID/REGION --profile eduretain-dev
+
+# Para producción
+npx cdk bootstrap aws://ACCOUNT-ID/REGION --profile eduretain-prod
+```
+
+### 🔧 Despliegue en Ambiente DESARROLLO
+
+#### 1. Configurar Variables de Ambiente
+```bash
+# Crear archivo de configuración
+cp packages/infrastructure/.env.example packages/infrastructure/.env.dev
+
+# Editar el archivo con tus valores
+nano packages/infrastructure/.env.dev
+```
+
+Contenido del archivo `.env.dev`:
+```env
+STAGE=dev
+AWS_ACCOUNT_ID=123456789012
+AWS_REGION=us-east-1
+DOMAIN_NAME=dev.eduretain.com
+SES_VERIFIED_DOMAIN=eduretain.com
+COGNITO_DOMAIN_PREFIX=eduretain-dev
+```
+
+#### 2. Desplegar Infraestructura Backend
+```bash
+# Desde la raíz del proyecto
+cd packages/infrastructure
+
+# Ver cambios que se aplicarán
+npx cdk diff --profile eduretain-dev
+
+# Desplegar stack completo
+npx cdk deploy EduRetainDev --profile eduretain-dev --require-approval never
+
+# O usar el script helper
+cd ../..
+./deploy.sh --stage dev --profile eduretain-dev
+```
+
+#### 3. Obtener Outputs del Stack
+```bash
+# Los outputs se mostrarán al final del deploy
+# Guardar estos valores:
+# - ApiGatewayUrl
+# - UserPoolId
+# - UserPoolClientId
+# - S3BucketName
+# - CloudFrontDistributionUrl
+```
+
+#### 4. Configurar Frontend
+```bash
+# Crear archivo de configuración del frontend
 cat > packages/frontend/.env.local << EOF
-NEXT_PUBLIC_API_URL=https://your-api-gateway-url/dev
-NEXT_PUBLIC_USER_POOL_ID=your-cognito-pool-id
-NEXT_PUBLIC_USER_POOL_CLIENT_ID=your-cognito-client-id
+NEXT_PUBLIC_API_URL=https://YOUR-API-ID.execute-api.us-east-1.amazonaws.com/dev
+NEXT_PUBLIC_USER_POOL_ID=us-east-1_XXXXXXXXX
+NEXT_PUBLIC_USER_POOL_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXX
+NEXT_PUBLIC_IDENTITY_POOL_ID=us-east-1:XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+NEXT_PUBLIC_AWS_REGION=us-east-1
 EOF
 ```
 
-### 3. Despliegue en AWS
+#### 5. Desplegar Frontend
 ```bash
-# Bootstrap CDK (solo primera vez)
-cd packages/infrastructure
-cdk bootstrap
-
-# Despliegue completo en desarrollo
-./deploy.sh --stage dev --profile your-aws-profile
-
-# Solo backend (más rápido para desarrollo)
-./deploy.sh --stage dev --backend-only --profile your-aws-profile
-```
-
-### 4. Desarrollo Local
-```bash
-# Frontend en desarrollo (requiere backend desplegado)
+# Opción A: Desarrollo local
 cd packages/frontend
 npm run dev
-
 # Acceder a http://localhost:4000
+
+# Opción B: Build y deploy a S3
+npm run build
+aws s3 sync out/ s3://eduretain-dev-frontend/ --profile eduretain-dev
+aws cloudfront create-invalidation --distribution-id EXXXXXXXXXX --paths "/*" --profile eduretain-dev
 ```
 
-### 5. Usuarios de Prueba
+#### 6. Crear Usuarios de Prueba
+```bash
+# Crear usuario admin
+aws cognito-idp admin-create-user \
+  --user-pool-id us-east-1_XXXXXXXXX \
+  --username admin@eduretain.com \
+  --user-attributes Name=email,Value=admin@eduretain.com Name=custom:universidadId,Value=UNI001 Name=custom:rol,Value=ADMIN_UNIVERSIDAD \
+  --temporary-password TempPass123! \
+  --profile eduretain-dev
+
+# El usuario deberá cambiar la contraseña en el primer login
+```
+
+### 🚀 Despliegue en Ambiente PRODUCCIÓN
+
+#### 1. Configurar Variables de Producción
+```bash
+# Crear archivo de configuración
+cp packages/infrastructure/.env.example packages/infrastructure/.env.prod
+
+# Editar con valores de producción
+nano packages/infrastructure/.env.prod
+```
+
+Contenido del archivo `.env.prod`:
+```env
+STAGE=prod
+AWS_ACCOUNT_ID=987654321098
+AWS_REGION=us-east-1
+DOMAIN_NAME=app.eduretain.com
+SES_VERIFIED_DOMAIN=eduretain.com
+COGNITO_DOMAIN_PREFIX=eduretain-prod
+ENABLE_MFA=true
+ENABLE_BACKUP=true
+ENABLE_MONITORING=true
+```
+
+#### 2. Pre-despliegue Checklist
+```bash
+# Verificar que todos los tests pasen
+npm run test
+
+# Verificar linting
+npm run lint
+
+# Build de todos los packages
+npm run build
+
+# Verificar que no hay secretos en el código
+git secrets --scan
+```
+
+#### 3. Desplegar Stack de Producción
+```bash
+cd packages/infrastructure
+
+# IMPORTANTE: Revisar cambios antes de aplicar
+npx cdk diff --profile eduretain-prod
+
+# Desplegar con aprobación manual
+npx cdk deploy EduRetainProd --profile eduretain-prod
+
+# O usar script con confirmación
+cd ../..
+./deploy.sh --stage prod --profile eduretain-prod --require-approval
+```
+
+#### 4. Configurar Frontend de Producción
+```bash
+# Crear archivo de configuración
+cat > packages/frontend/.env.production << EOF
+NEXT_PUBLIC_API_URL=https://api.eduretain.com
+NEXT_PUBLIC_USER_POOL_ID=us-east-1_YYYYYYYYY
+NEXT_PUBLIC_USER_POOL_CLIENT_ID=YYYYYYYYYYYYYYYYYYYYYYYYY
+NEXT_PUBLIC_IDENTITY_POOL_ID=us-east-1:YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY
+NEXT_PUBLIC_AWS_REGION=us-east-1
+EOF
+
+# Build optimizado para producción
+cd packages/frontend
+npm run build
+
+# Deploy a S3 con CloudFront
+aws s3 sync out/ s3://eduretain-prod-frontend/ --profile eduretain-prod --delete
+aws cloudfront create-invalidation --distribution-id EYYYYYYYYYY --paths "/*" --profile eduretain-prod
+```
+
+#### 5. Configurar Dominio Personalizado (Opcional)
+```bash
+# En Route 53, crear registros A apuntando a CloudFront
+# Tipo: A
+# Nombre: app.eduretain.com
+# Alias: Sí
+# Destino: CloudFront Distribution
+```
+
+#### 6. Configurar Monitoreo y Alertas
+```bash
+# Verificar CloudWatch Dashboard
+aws cloudwatch get-dashboard --dashboard-name EduRetain-Prod --profile eduretain-prod
+
+# Configurar notificaciones SNS
+aws sns subscribe \
+  --topic-arn arn:aws:sns:us-east-1:ACCOUNT:eduretain-prod-alerts \
+  --protocol email \
+  --notification-endpoint ops@eduretain.com \
+  --profile eduretain-prod
+```
+
+### 🔄 Actualización de Ambientes
+
+#### Actualizar Desarrollo
+```bash
+git pull origin develop
+npm run bootstrap
+cd packages/infrastructure
+npx cdk deploy EduRetainDev --profile eduretain-dev
+cd ../frontend
+npm run build && npm run deploy:dev
+```
+
+#### Actualizar Producción
+```bash
+git checkout main
+git pull origin main
+npm run bootstrap
+npm run test
+cd packages/infrastructure
+npx cdk deploy EduRetainProd --profile eduretain-prod --require-approval broadening
+cd ../frontend
+npm run build && npm run deploy:prod
+```
+
+### 🧪 Verificación Post-Despliegue
+
+#### 1. Tests de Salud
+```bash
+# Verificar API
+curl https://api.eduretain.com/dev/health
+
+# Verificar Frontend
+curl -I https://app.eduretain.com
+
+# Verificar Cognito
+aws cognito-idp describe-user-pool --user-pool-id us-east-1_XXXXXXXXX --profile eduretain-dev
+```
+
+#### 2. Tests Funcionales
+- [ ] Login con usuario de prueba
+- [ ] Importar archivo CSV de ejemplo
+- [ ] Ver dashboard con métricas
+- [ ] Crear una campaña de prueba
+- [ ] Verificar logs en CloudWatch
+
+### 🔥 Rollback en Caso de Error
+
+```bash
+# Ver historial de deployments
+aws cloudformation list-stacks --profile eduretain-prod
+
+# Rollback a versión anterior
+aws cloudformation cancel-update-stack --stack-name EduRetainProd --profile eduretain-prod
+
+# O usando CDK
+npx cdk deploy EduRetainProd --profile eduretain-prod --rollback
+```
+
+### 📝 Variables de Entorno Requeridas
+
+| Variable | Desarrollo | Producción | Descripción |
+|----------|------------|------------|-------------|
+| STAGE | dev | prod | Ambiente de despliegue |
+| AWS_REGION | us-east-1 | us-east-1 | Región AWS |
+| API_URL | https://xxx.execute-api | https://api.eduretain.com | URL de API Gateway |
+| USER_POOL_ID | us-east-1_XXX | us-east-1_YYY | Cognito User Pool |
+| IDENTITY_POOL_ID | us-east-1:XXX | us-east-1:YYY | Cognito Identity Pool |
+
+### 🔐 Usuarios de Prueba
+
+#### Desarrollo
 ```
 Admin:
 - Email: admin@eduretain.com
-- Password: Admin123!
+- Password: Admin123!Dev
 - Rol: ADMIN_UNIVERSIDAD
 
 Demo:
 - Email: demo@eduretain.com
-- Password: Demo123!
+- Password: Demo123!Dev
 - Rol: OPERADOR_FACULTAD
+```
+
+#### Producción
+```
+Admin:
+- Email: admin@eduretain.com
+- Password: [Configurar en primer login]
+- Rol: ADMIN_UNIVERSIDAD
 ```
 
 ## 📊 Funcionalidades Detalladas
@@ -433,7 +689,7 @@ EduRetain/
 ├── deploy.sh                     # Script de despliegue
 ├── package.json                  # Workspace root
 ├── tsconfig.json                # TypeScript config base
-├── CLAUDE.md                    # Master prompt para IA
+├── DEVELOPMENT.md               # Guía técnica de desarrollo
 └── README.md                    # Este archivo
 ```
 
@@ -740,7 +996,7 @@ chore: cambios de build o auxiliares
 - **[Architecture](./docs/architecture.md)**: Decisiones arquitectónicas
 - **[Deployment](./docs/deployment.md)**: Guía detallada de despliegue
 - **[Troubleshooting](./docs/troubleshooting.md)**: Solución de problemas comunes
-- **[Master Prompt](./CLAUDE.md)**: Guía técnica completa de desarrollo
+- **[Development Guide](./DEVELOPMENT.md)**: Guía técnica completa de desarrollo
 
 ### Comunidad
 - **GitHub Issues**: Reportar bugs y solicitar features

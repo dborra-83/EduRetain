@@ -102,10 +102,22 @@ export class AlumnoRepository extends BaseRepository {
     const expressionAttributeNames: Record<string, string> = {};
     const expressionAttributeValues: Record<string, any> = {};
 
+    if (filters.facultadId) {
+      filterExpressions.push('#facultadId = :facultadId');
+      expressionAttributeNames['#facultadId'] = 'facultadId';
+      expressionAttributeValues[':facultadId'] = filters.facultadId;
+    }
+
     if (filters.carreraId) {
       filterExpressions.push('#carreraId = :carreraId');
       expressionAttributeNames['#carreraId'] = 'carreraId';
       expressionAttributeValues[':carreraId'] = filters.carreraId;
+    }
+
+    if (filters.estadoMatricula) {
+      filterExpressions.push('#estadoMatricula = :estadoMatricula');
+      expressionAttributeNames['#estadoMatricula'] = 'estadoMatricula';
+      expressionAttributeValues[':estadoMatricula'] = filters.estadoMatricula;
     }
 
     if (filters.riesgoDesercion) {

@@ -63,10 +63,22 @@ interface ParsedRow {
   estadoMatricula?: string;
 }
 
-const EXAMPLE_CSV = `cedula,nombre,apellido,email,telefono,carreraId,promedioNotas,creditosAprobados,creditosTotales,semestreActual,fechaIngreso
-12345678,Juan,Pérez,juan.perez@email.com,3001234567,ING001,3.5,45,60,5,2022-01-15
-87654321,María,González,maria.gonzalez@email.com,3007654321,MED002,4.2,80,120,7,2021-08-20
-11111111,Carlos,Rodríguez,carlos.rodriguez@email.com,3001111111,DER003,2.8,30,45,3,2023-01-10`;
+const EXAMPLE_CSV = `cedula,nombre,apellido,email,telefono,carreraId,facultadId,promedioNotas,creditosAprobados,creditosTotales,semestreActual,fechaIngreso,estadoMatricula,asistenciaClases,materiasReprobadas,ultimaActividadSistema1,ultimaActividadSistema2,ultimaActividadSistema3,ultimoIngresoCampus,estadoSocioeconomico
+12345678,Juan,Pérez,juan.perez@email.com,3001234567,CAR001,FAC001,3.5,45,60,5,2022-01-15,ACTIVO,85,0,2024-01-20,2024-01-19,2024-01-18,2024-01-20,MEDIO
+87654321,María,González,maria.gonzalez@email.com,3007654321,CAR002,FAC002,4.2,80,120,7,2021-08-20,ACTIVO,95,0,2024-01-20,2024-01-20,2024-01-19,2024-01-19,ALTO
+11111111,Carlos,Rodríguez,carlos.rodriguez@email.com,3001111111,CAR003,FAC003,2.8,30,60,3,2023-01-10,ACTIVO,60,2,2024-01-15,2024-01-10,2024-01-05,2024-01-10,BAJO
+22222222,Ana,Martínez,ana.martinez@email.com,3002222222,CAR001,FAC001,1.8,20,60,4,2022-08-15,ACTIVO,45,4,2023-12-15,2023-12-10,2023-12-05,2023-12-01,BAJO
+33333333,Luis,García,luis.garcia@email.com,3003333333,CAR004,FAC001,3.2,55,80,6,2021-01-20,ACTIVO,75,1,2024-01-18,2024-01-17,2024-01-16,2024-01-18,MEDIO
+44444444,Sofia,López,sofia.lopez@email.com,3004444444,CAR002,FAC002,3.8,90,120,8,2020-08-15,ACTIVO,88,0,2024-01-20,2024-01-19,2024-01-20,2024-01-20,MEDIO
+55555555,Diego,Torres,diego.torres@email.com,3005555555,CAR005,FAC003,2.5,35,70,5,2022-01-10,INACTIVO,55,3,2023-11-20,2023-11-15,2023-11-10,2023-11-05,MEDIO_BAJO
+66666666,Camila,Ramírez,camila.ramirez@email.com,3006666666,CAR003,FAC003,4.5,60,60,4,2021-08-20,ACTIVO,98,0,2024-01-20,2024-01-20,2024-01-20,2024-01-20,ALTO
+77777777,Andrés,Flores,andres.flores@email.com,3007777777,CAR001,FAC001,2.2,25,60,3,2023-01-15,ACTIVO,50,2,2024-01-10,2024-01-05,2023-12-28,2024-01-08,BAJO
+88888888,Valentina,Herrera,valentina.herrera@email.com,3008888888,CAR006,FAC004,3.9,110,140,9,2020-01-20,ACTIVO,92,0,2024-01-19,2024-01-18,2024-01-19,2024-01-19,MEDIO
+99999999,Miguel,Castillo,miguel.castillo@email.com,3009999999,CAR007,FAC005,1.5,15,60,6,2021-08-15,SUSPENDIDO,30,5,2023-10-20,2023-10-15,2023-10-10,2023-10-01,BAJO
+10101010,Isabella,Moreno,isabella.moreno@email.com,3001010101,CAR002,FAC002,3.7,75,100,7,2021-01-10,ACTIVO,82,1,2024-01-20,2024-01-19,2024-01-18,2024-01-20,MEDIO
+20202020,Santiago,Jiménez,santiago.jimenez@email.com,3002020202,CAR003,FAC003,2.9,40,80,5,2022-08-20,ACTIVO,68,2,2024-01-15,2024-01-14,2024-01-13,2024-01-15,MEDIO_BAJO
+30303030,Lucía,Díaz,lucia.diaz@email.com,3003030303,CAR001,FAC001,4.8,58,60,4,2021-08-15,ACTIVO,100,0,2024-01-20,2024-01-20,2024-01-20,2024-01-20,ALTO
+40404040,Gabriel,Ortiz,gabriel.ortiz@email.com,3004040404,CAR008,FAC006,2.3,30,90,7,2020-08-10,ACTIVO,48,3,2024-01-01,2023-12-28,2023-12-25,2023-12-20,BAJO`;
 
 function ImportarPage() {
   const { user } = useAuth();
