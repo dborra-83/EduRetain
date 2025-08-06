@@ -296,24 +296,18 @@ export default function MyPage() {
 ### Contacto
 - **Issues**: Reportar bugs en GitHub Issues
 - **Discussions**: Preguntas y discusiones
-- **Email**: soporte@eduretain.com
+- **Email**: dborra@gmail.com 
 
 ---
 
 ## 📄 Licencia
 
-Copyright © 2025 CloudHesive. Todos los derechos reservados.
+Copyright © 2025 DBORRA. Todos los derechos reservados.
 
 ## 🏆 Agradecimientos
 
-Desarrollado con ❤️ por el equipo de CloudHesive utilizando Claude Code.
+Desarrollado con ❤️
 
-- **AWS**: Por la infraestructura serverless
-- **Anthropic**: Por Claude 3.5 Sonnet IA
-- **Next.js & React**: Por el framework frontend
-- **Material-UI**: Por los componentes de UI
-- **TypeScript**: Por la seguridad de tipos
 
 ---
 
-*🤖 Generated with [Claude Code](https://claude.ai/code) - Actualizado Enero 2025*
